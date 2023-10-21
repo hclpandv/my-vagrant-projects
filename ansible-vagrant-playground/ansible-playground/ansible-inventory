@@ -1,0 +1,9 @@
+[vikimanaged:children]
+host01
+host02
+
+[host01]
+10.10.10.61
+
+[host02]
+10.10.10.62

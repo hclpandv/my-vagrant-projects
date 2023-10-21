@@ -1,0 +1,75 @@
+---
+- name: Ensure iptables package is installed 
+  apt: name=iptables state=latest
+
+- name: Flush existing firewall rules
+  iptables: flush=true
+
+- name: Rewrite firewall rules - allow all loopback traffic
+  iptables:
+    action: append
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+
+- name: Firewall rule - allow established connections
+  iptables:
+    chain: INPUT
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+
+- name: Firewall rule - allow port ping traffic
+  iptables:
+    chain: INPUT
+    jump: ACCEPT
+    protocol: icmp
+
+- name: Firewall rule - allow port 22/SSH traffic
+  iptables:
+    chain: INPUT
+    destination_port: 22
+    jump: ACCEPT
+    protocol: tcp
+
+- name: Firewall rule - allow port 3306/sql traffic
+  iptables:
+    chain: INPUT
+    destination_port: 3306
+    jump: ACCEPT
+    protocol: tcp
+
+- name: Firewall rule - allow port 443/HTTP traffic
+  iptables:
+    chain: INPUT
+    destination_port: 443
+    jump: ACCEPT
+    protocol: tcp
+
+- name: Firewall rule - drop any traffic without rule
+  iptables:
+    chain: INPUT
+    jump: DROP
+
+- name: Install netfilter-persistent && iptables-persistent packages to persist the settings after reboot. 
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - iptables-persistent
+      - netfilter-persistent
+
+- name: Install fail2ban package
+  apt: name=fail2ban state=latest
+
+- name: Override required fail2ban configurations
+  copy:
+    src: ../templates/jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Restart fail2ban service
+  service:
+    name: fail2ban
+    state: restarted

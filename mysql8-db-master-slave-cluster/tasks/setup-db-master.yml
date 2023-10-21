@@ -1,0 +1,33 @@
+---
+- name: Install python module
+  apt: name=python-mysqldb state=present
+
+- name: Create replication account
+  mysql_user: name="{{ vault_mysql_replication_username }}" host="%" password="{{ vault_mysql_replication_password }}" priv="*.*:REPLICATION SLAVE" state=present
+
+- name: Append require ssl privilege
+  command: /usr/bin/mysql -uroot -e "ALTER USER '{{ vault_mysql_replication_username }}'@'%' REQUIRE SSL;" 
+  
+- name: Flush Privileges
+  command: /usr/bin/mysql -uroot -e "FLUSH PRIVILEGES;"
+
+- name: Set mysql root user
+  mysql_user:
+    name: "{{ vault_mysql_username }}"
+    password: "{{ vault_mysql_password }}"
+    check_implicit_admin: true
+
+- name: Modify mysql config file
+  blockinfile:
+    path: /etc/mysql/mysql.conf.d/mysqld.cnf
+    marker: "#{mark} ANSIBLE MANAGED BLOCK"
+    insertafter: "[mysqld]"
+    block: |
+      log_bin         = mysql-bin
+      server_id       = 101
+
+- name: Restart mysql service
+  service: name=mysql state=restarted
+
+
+

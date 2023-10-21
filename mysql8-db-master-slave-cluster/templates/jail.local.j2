@@ -1,0 +1,20 @@
+[DEFAULT]
+# Ban hosts for one hour:
+bantime = 3600
+
+[sshd]
+enabled = true
+maxretry = 3
+
+[sasl]
+enabled  = true
+port     = smtp
+filter   = postfix-sasl
+maxretry = 3
+
+[mysql]
+enabled  = true
+port     = 3306
+filter   = mysql
+logpath  = /var/log/mysql/error.log
+maxretry = 3

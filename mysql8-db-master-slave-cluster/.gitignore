@@ -1,0 +1,10 @@
+# Ignore .env files as they are personal
+/.env
+
+# Ignore vagrant files
+/.vagrant/
+
+# Ignore ansible installed roles
+/geerlingguy.*/
+
+

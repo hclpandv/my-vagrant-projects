@@ -1,0 +1,47 @@
+- name: Install and Configure mysql8 db as slave 
+  hosts: all
+  become: true
+  become_method: sudo
+  vars:
+      vault_mysql_username: root
+      vault_mysql_password: vikipass
+      vault_mysql_replication_username: replicator
+      vault_mysql_replication_password: vikipass
+      overwrite_global_mycnf: false
+      mysql_root_password: "{{ vault_mysql_password }}"  
+      mysql_user_password: "{{ vault_mysql_password }}"
+      mysql_root_password_update: true
+
+  pre_tasks:
+    - name: Try to specify preference for mysql
+      shell: echo mysql-apt-config mysql-apt-config/select-server select mysql-8.0 | debconf-set-selections
+
+    - name: Add mysql apt-config debian
+      apt: deb=http://dev.mysql.com/get/mysql-apt-config_0.8.12-1_all.deb update-cache=yes force=true
+
+    - name: Update apt-get
+      command: apt-get update
+
+    #- name: Upgrade apt-get packages
+    #  shell: DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
+  
+    - name: Install packages
+      apt: 
+        update_cache: yes 
+        name: "{{ packages }}" 
+        state: present
+      vars:
+        packages:
+        - python
+        - python-pip
+       #- mysql-server
+  
+  roles:
+    - role: geerlingguy.ntp
+    - role: geerlingguy.mysql
+
+  tasks:
+    - import_tasks: tasks/setup-db-slave.yml
+    #- import_tasks: tasks/secure-db-server.yml
+
+

@@ -1,0 +1,69 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  #------------------------------------------------------------
+  #------ Creating VM: a loadbalancer with haproxy installed
+  #------------------------------------------------------------
+  config.vm.define "control" do |control|
+    control.vm.box = "bento/ubuntu-18.04"
+    control.vm.hostname = 'control.ansible.local'
+    # Assigning IP:
+    control.vm.network "private_network", ip: "10.10.10.60"
+    control.vm.synced_folder '.', '/vagrant-nfs' , type: 'nfs'
+    control.bindfs.bind_folder '/vagrant-nfs', '/vagrant', u: 'vagrant', g: 'www-data', o: 'nonempty', p: '0775'
+    #------ Using Virtualbox provider for the exercise
+    control.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.customize ["modifyvm", :id, "--name", "control"]  
+      # Customize the amount of memory on the VM:
+      vb.memory = "512"      
+    end
+    #------ Install ansible
+    control.vm.provision "install_ansible", type: "shell" do |instansi|
+      instansi.path = "./control/install-ansible.sh"
+    end
+  end
+  #-----------------------------------------------------------
+  #------ Creating VM: a hostserver host01
+  #-----------------------------------------------------------
+  config.vm.define "host01" do |host01|
+    host01.vm.box = "bento/ubuntu-18.04"
+    host01.vm.hostname = 'host01.ansible.local'
+    # Assigning IP:
+    host01.vm.network "private_network", ip: "10.10.10.61"
+    #------ Using Virtualbox provider for the exercise
+    host01.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.customize ["modifyvm", :id, "--name", "host01"]
+      # Customize the amount of memory on the VM:
+      vb.memory = "512"
+    end
+    #------ Provisioning via shell. apache2 setup
+    host01.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+    SHELL
+  end
+  #-----------------------------------------------------------
+  #------ Creating VM: a hostserver host02
+  #-----------------------------------------------------------
+  config.vm.define "host02" do |host02|
+    host02.vm.box = "bento/ubuntu-18.04"
+    host02.vm.hostname = 'host02.ansible.local'
+    # Assigning IP:
+    host02.vm.network "private_network", ip: "10.10.10.62"
+    #------ Using Virtualbox provider for the exercise
+    host02.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.customize ["modifyvm", :id, "--name", "host02"]
+      # Customize the amount of memory on the VM:
+      vb.memory = "512"
+    end
+    #------ Provisioning through Ansible as per guidelines in exercise
+    host02.vm.provision "shell", inline: <<-SHELL
+      apt-get update
+    SHELL
+  end
+
+end
+
